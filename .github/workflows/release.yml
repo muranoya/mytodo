@@ -1,0 +1,145 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build APK but skip tag/release creation
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up just
+        uses: extractions/setup-just@v3
+
+      - name: Run lint and unit tests
+        run: just check
+
+  release:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up just
+        uses: extractions/setup-just@v3
+
+      - name: Read VERSION
+        id: version
+        run: echo "version=$(just version)" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure tag does not already exist
+        env:
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "tag ${TAG} already exists" >&2
+            exit 1
+          fi
+
+      - name: Verify signing secrets are present
+        env:
+          KS: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KSP: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KP: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          missing=0
+          for var in KS KSP KA KP; do
+            if [ -z "${!var}" ]; then
+              echo "missing secret: ${var}" >&2
+              missing=1
+            fi
+          done
+          [ "${missing}" -eq 0 ]
+
+      - name: Decode keystore and export signing env
+        env:
+          KS: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          KSP: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          KA: ${{ secrets.RELEASE_KEY_ALIAS }}
+          KP: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          keystore_path="${RUNNER_TEMP}/release.jks"
+          printf '%s' "${KS}" | base64 -d > "${keystore_path}"
+          {
+            echo "RELEASE_KEYSTORE_PATH=${keystore_path}"
+            echo "RELEASE_KEYSTORE_PASSWORD=${KSP}"
+            echo "RELEASE_KEY_ALIAS=${KA}"
+            echo "RELEASE_KEY_PASSWORD=${KP}"
+          } >> "$GITHUB_ENV"
+
+      - name: Build release APK
+        run: just build-release
+
+      - name: Rename APK
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          src="app/build/outputs/apk/release/app-release.apk"
+          dst="mytodo-v${VERSION}.apk"
+          if [ ! -f "${src}" ]; then
+            echo "signed APK not produced (expected ${src})" >&2
+            ls -la app/build/outputs/apk/release/ || true
+            exit 1
+          fi
+          mv "${src}" "${dst}"
+          echo "APK_PATH=${dst}" >> "$GITHUB_ENV"
+
+      - name: Upload APK as workflow artifact (dry run)
+        if: ${{ inputs.dry_run }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: mytodo-v${{ steps.version.outputs.version }}
+          path: ${{ env.APK_PATH }}
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: ${{ !inputs.dry_run }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: ${{ env.APK_PATH }}
+          fail_on_unmatched_files: true
+
+      - name: Cleanup keystore
+        if: always()
+        run: |
+          keystore_path="${RUNNER_TEMP}/release.jks"
+          if [ -f "${keystore_path}" ]; then
+            shred -u "${keystore_path}" 2>/dev/null || rm -f "${keystore_path}"
+          fi

@@ -30,7 +30,6 @@ import net.meshpeak.mytodo.ui.navigation.TopRoute
 data class FolderDetailUiState(
     val folder: Folder? = null,
     val todos: List<Todo> = emptyList(),
-    val allFolders: List<Folder> = emptyList(),
     val isLoading: Boolean = true,
     val isMissing: Boolean = false,
 )
@@ -64,14 +63,12 @@ class FolderDetailViewModel @Inject constructor(
     val uiState: StateFlow<FolderDetailUiState> = combine(
         folderRepo.observe(folderId),
         dbTodosFlow,
-        folderRepo.observeAll(),
         pendingOrder,
-    ) { folder, dbTodos, folders, pending ->
+    ) { folder, dbTodos, pending ->
         val loading = folder == null && dbTodos == null
         FolderDetailUiState(
             folder = folder,
             todos = pending ?: dbTodos.orEmpty(),
-            allFolders = folders,
             isLoading = loading,
             isMissing = !loading && folder == null,
         )
@@ -116,24 +113,6 @@ class FolderDetailViewModel @Inject constructor(
             } else {
                 updateTodo(current = initialTodo, folderId = folderId, title = title, note = note, priority = priority)
             }
-        }
-    }
-
-    fun rename(newName: String) {
-        val trimmed = newName.trim()
-        if (trimmed.isEmpty()) return
-        viewModelScope.launch {
-            val f = uiState.value.folder ?: return@launch
-            folderRepo.upsert(f.copy(name = trimmed))
-            _events.emit(UiEvent.ShowSnackbar(messageRes = R.string.snackbar_folder_renamed, messageArg = trimmed))
-        }
-    }
-
-    fun delete(onDeleted: () -> Unit) {
-        viewModelScope.launch {
-            folderRepo.deleteById(folderId)
-            _events.emit(UiEvent.ShowSnackbar(messageRes = R.string.snackbar_folder_deleted))
-            onDeleted()
         }
     }
 

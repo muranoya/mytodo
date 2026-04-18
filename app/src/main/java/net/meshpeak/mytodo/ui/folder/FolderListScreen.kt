@@ -1,6 +1,7 @@
 package net.meshpeak.mytodo.ui.folder
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,12 +15,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -41,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.meshpeak.mytodo.R
+import net.meshpeak.mytodo.domain.model.Folder
 import net.meshpeak.mytodo.ui.common.SnackbarEffect
 import net.meshpeak.mytodo.ui.components.EmptyState
 import net.meshpeak.mytodo.ui.components.FolderNameSheet
@@ -48,7 +52,6 @@ import net.meshpeak.mytodo.ui.theme.MytodoTheme
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FolderListScreen(
     onOpenFolder: (folderId: Long) -> Unit,
@@ -57,13 +60,11 @@ fun FolderListScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var showCreateSheet by remember { mutableStateOf(false) }
+    var renameTarget by remember { mutableStateOf<Folder?>(null) }
 
     SnackbarEffect(viewModel.events, snackbar)
 
     Scaffold(
-        topBar = {
-            LargeTopAppBar(title = { Text(stringResource(R.string.nav_folders)) })
-        },
         floatingActionButton = {
             FloatingActionButton(onClick = { showCreateSheet = true }) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_new_folder))
@@ -81,6 +82,8 @@ fun FolderListScreen(
                 else -> ReorderableFolderList(
                     rows = state.rows,
                     onOpen = onOpenFolder,
+                    onRename = { folder -> renameTarget = folder },
+                    onDelete = { id -> viewModel.delete(id) },
                     onDragStarted = viewModel::onDragStarted,
                     onDragMove = viewModel::onDragMove,
                     onDragCommit = viewModel::onDragCommit,
@@ -100,12 +103,26 @@ fun FolderListScreen(
             },
         )
     }
+
+    renameTarget?.let { target ->
+        FolderNameSheet(
+            titleRes = R.string.sheet_title_rename_folder,
+            initialName = target.name,
+            onDismiss = { renameTarget = null },
+            onSubmit = { name ->
+                viewModel.rename(target.id, name)
+                renameTarget = null
+            },
+        )
+    }
 }
 
 @Composable
 private fun ReorderableFolderList(
     rows: List<FolderRowUi>,
     onOpen: (Long) -> Unit,
+    onRename: (Folder) -> Unit,
+    onDelete: (Long) -> Unit,
     onDragStarted: () -> Unit,
     onDragMove: (Int, Int) -> Unit,
     onDragCommit: () -> Unit,
@@ -115,6 +132,7 @@ private fun ReorderableFolderList(
     val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
         onDragMove(from.index, to.index)
     }
+    var menuForId by remember { mutableStateOf<Long?>(null) }
     LazyColumn(
         state = lazyListState,
         modifier = Modifier.fillMaxSize(),
@@ -126,6 +144,20 @@ private fun ReorderableFolderList(
                     name = row.folder.name,
                     activeCount = row.activeCount,
                     onClick = { onOpen(row.folder.id) },
+                    onLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        menuForId = row.folder.id
+                    },
+                    menuExpanded = menuForId == row.folder.id,
+                    onMenuDismiss = { menuForId = null },
+                    onRenameClick = {
+                        menuForId = null
+                        onRename(row.folder)
+                    },
+                    onDeleteClick = {
+                        menuForId = null
+                        onDelete(row.folder.id)
+                    },
                     dragHandleModifier = Modifier.longPressDraggableHandle(
                         onDragStarted = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -142,11 +174,17 @@ private fun ReorderableFolderList(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun FolderListRow(
     name: String,
     activeCount: Int,
     onClick: () -> Unit,
+    onLongClick: () -> Unit = {},
+    menuExpanded: Boolean = false,
+    onMenuDismiss: () -> Unit = {},
+    onRenameClick: () -> Unit = {},
+    onDeleteClick: () -> Unit = {},
     dragHandleModifier: Modifier = Modifier,
 ) {
     Surface(color = MaterialTheme.colorScheme.surface) {
@@ -154,7 +192,7 @@ internal fun FolderListRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 64.dp)
-                .clickable(onClick = onClick)
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -179,13 +217,22 @@ internal fun FolderListRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = onMenuDismiss,
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_rename_folder)) },
+                        leadingIcon = { Icon(Icons.Filled.DriveFileRenameOutline, null) },
+                        onClick = onRenameClick,
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_delete_folder)) },
+                        leadingIcon = { Icon(Icons.Filled.Delete, null) },
+                        onClick = onDeleteClick,
+                    )
+                }
             }
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = "$activeCount",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             Spacer(Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Filled.DragHandle,

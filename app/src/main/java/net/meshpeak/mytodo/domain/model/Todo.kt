@@ -7,7 +7,7 @@ data class Todo(
     val folderId: Long,
     val title: String,
     val note: String? = null,
-    val priority: Priority = Priority.Today,
+    val priority: Priority = Priority.Unspecified,
     val isCompleted: Boolean = false,
     val orderIndex: Int = UNASSIGNED_ORDER,
     val createdAt: Instant = Instant.EPOCH,

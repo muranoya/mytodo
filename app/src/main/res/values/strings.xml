@@ -2,15 +2,16 @@
 <resources>
     <string name="app_name">mytodo</string>
 
-    <string name="nav_overview">アクティブ</string>
+    <string name="nav_overview">優先度</string>
     <string name="nav_folders">フォルダ</string>
-    <string name="nav_trash">ゴミ箱</string>
+    <string name="nav_trash">アーカイブ</string>
 
     <string name="priority_asap">すぐやる</string>
     <string name="priority_today">今日やる</string>
     <string name="priority_tomorrow">明日やる</string>
     <string name="priority_this_week">今週中</string>
     <string name="priority_someday">そのうち</string>
+    <string name="priority_unspecified">未指定</string>
 
     <string name="action_undo">元に戻す</string>
     <string name="action_new_todo">新しいTODO</string>
@@ -19,14 +20,14 @@
     <string name="action_more">メニュー</string>
     <string name="action_rename_folder">フォルダ名を変更</string>
     <string name="action_delete_folder">フォルダを削除</string>
-    <string name="action_empty_trash">ゴミ箱を空にする</string>
+    <string name="action_empty_archive">全て削除</string>
     <string name="action_cancel">キャンセル</string>
     <string name="action_save">保存</string>
+    <string name="action_confirm_delete">削除する</string>
 
     <string name="label_title">タイトル</string>
     <string name="label_note">メモ</string>
     <string name="label_priority">優先度</string>
-    <string name="label_folder">フォルダ</string>
     <string name="label_folder_name">フォルダ名</string>
 
     <string name="sheet_title_new_todo">新しいTODO</string>
@@ -34,27 +35,32 @@
     <string name="sheet_title_new_folder">新しいフォルダ</string>
     <string name="sheet_title_rename_folder">フォルダ名を変更</string>
 
+    <string name="dialog_empty_archive_title">アーカイブを空にしますか？</string>
+    <string name="dialog_empty_archive_message">完了済み・削除済みのTODOをすべて完全に削除します。この操作は取り消せません。</string>
+
+    <string name="archive_status_completed">完了</string>
+    <string name="archive_status_deleted">削除</string>
+
     <string name="empty_overview_title">アクティブなTODOはありません</string>
     <string name="empty_overview_support">右下のボタンから追加できます</string>
     <string name="empty_folders_title">フォルダがありません</string>
     <string name="empty_folders_support">右下のボタンから作成しましょう</string>
     <string name="empty_folder_title">このフォルダは空です</string>
     <string name="empty_folder_support">右下のボタンからTODOを追加できます</string>
-    <string name="empty_trash_title">ゴミ箱は空です</string>
+    <string name="empty_trash_title">アーカイブは空です</string>
     <string name="empty_trash_support">完了または削除したTODOが30日間保管されます</string>
 
     <string name="folder_row_empty">未完了なし</string>
     <string name="folder_row_count">未完了 %1$d 件</string>
 
     <string name="snackbar_completed">完了にしました</string>
-    <string name="snackbar_moved_to_trash">ゴミ箱に移動しました</string>
-    <string name="snackbar_need_folder_first">先にフォルダを作成してください</string>
+    <string name="snackbar_moved_to_trash">アーカイブに移動しました</string>
     <string name="snackbar_folder_created">「%1$s」を作成しました</string>
     <string name="snackbar_folder_renamed">「%1$s」に変更しました</string>
     <string name="snackbar_folder_deleted">フォルダを削除しました</string>
     <string name="snackbar_restored">復元しました</string>
     <string name="snackbar_purged">完全に削除しました</string>
-    <string name="snackbar_trash_emptied">ゴミ箱を空にしました</string>
+    <string name="snackbar_trash_emptied">アーカイブを空にしました</string>
     <string name="snackbar_reorder_applied">並び順を更新しました</string>
 
     <string name="action_drag_handle">並び替えハンドル</string>

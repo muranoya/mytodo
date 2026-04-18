@@ -26,8 +26,8 @@ private data class TopTab(
 )
 
 private val tabs: List<TopTab> = listOf(
-    TopTab(TopRoute.Overview, R.string.nav_overview, Icons.Filled.Inbox),
     TopTab(TopRoute.FolderList, R.string.nav_folders, Icons.Filled.Folder),
+    TopTab(TopRoute.Overview, R.string.nav_overview, Icons.Filled.Inbox),
     TopTab(TopRoute.Trash, R.string.nav_trash, Icons.Filled.DeleteSweep),
 )
 

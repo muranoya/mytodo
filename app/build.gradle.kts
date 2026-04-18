@@ -1,5 +1,19 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
+val versionFile = rootProject.file("VERSION")
+check(versionFile.exists()) { "VERSION file not found at ${versionFile.path}" }
+val appVersionName = versionFile.readText().trim()
+val semver = Regex("""^(\d+)\.(\d+)\.(\d+)$""").matchEntire(appVersionName)
+    ?: error("VERSION must match MAJOR.MINOR.PATCH (got '$appVersionName')")
+val (semverMajor, semverMinor, semverPatch) = semver.destructured
+listOf(semverMajor, semverMinor, semverPatch).forEach {
+    require(it.toInt() in 0..99) {
+        "Each semver component must be 0..99 (got '$appVersionName')"
+    }
+}
+val appVersionCode =
+    semverMajor.toInt() * 10_000 + semverMinor.toInt() * 100 + semverPatch.toInt()
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -16,11 +30,28 @@ android {
         applicationId = "net.meshpeak.mytodo"
         minSdk = 29
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+    }
+
+    signingConfigs {
+        val ksPath = System.getenv("RELEASE_KEYSTORE_PATH")
+        val ksPassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+        val alias = System.getenv("RELEASE_KEY_ALIAS")
+        val keyPwd = System.getenv("RELEASE_KEY_PASSWORD")
+        if (!ksPath.isNullOrBlank() && file(ksPath).exists() &&
+            !ksPassword.isNullOrBlank() && !alias.isNullOrBlank() && !keyPwd.isNullOrBlank()
+        ) {
+            create("release") {
+                storeFile = file(ksPath)
+                storePassword = ksPassword
+                keyAlias = alias
+                keyPassword = keyPwd
+            }
+        }
     }
 
     buildTypes {
@@ -30,6 +61,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
         debug {
             isDebuggable = true

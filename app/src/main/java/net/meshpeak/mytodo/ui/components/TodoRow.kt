@@ -26,14 +26,13 @@ import androidx.compose.ui.unit.dp
 import java.time.Instant
 import net.meshpeak.mytodo.domain.model.Priority
 import net.meshpeak.mytodo.domain.model.Todo
-import net.meshpeak.mytodo.ui.common.label
 import net.meshpeak.mytodo.ui.theme.MytodoTheme
 import net.meshpeak.mytodo.ui.theme.tint
 
 @Composable
 fun TodoRow(
     todo: Todo,
-    folderName: String?,
+    subtitle: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     trailing: @Composable (RowScope.() -> Unit)? = null,
@@ -65,8 +64,7 @@ fun TodoRow(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                val subtitle = buildSubtitle(todo.priority, folderName)
-                if (subtitle.isNotEmpty()) {
+                if (!subtitle.isNullOrBlank()) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
@@ -84,15 +82,6 @@ fun TodoRow(
     }
 }
 
-@Composable
-private fun buildSubtitle(priority: Priority, folderName: String?): String {
-    val priorityLabel = priority.label()
-    return when {
-        folderName.isNullOrBlank() -> priorityLabel
-        else -> "$priorityLabel · $folderName"
-    }
-}
-
 @Preview
 @Composable
 private fun TodoRowPreview() {
@@ -106,7 +95,7 @@ private fun TodoRowPreview() {
                     priority = Priority.Today,
                     createdAt = Instant.EPOCH,
                 ),
-                folderName = "仕事",
+                subtitle = "仕事",
                 onClick = {},
             )
         }

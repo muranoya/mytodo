@@ -34,8 +34,13 @@ sealed interface Priority {
         override val labelRes: Int = R.string.priority_someday
     }
 
+    data object Unspecified : Priority {
+        override val rank: Int = 5
+        override val labelRes: Int = R.string.priority_unspecified
+    }
+
     companion object {
-        val entries: List<Priority> = listOf(Asap, Today, Tomorrow, ThisWeek, Someday)
+        val entries: List<Priority> = listOf(Asap, Today, Tomorrow, ThisWeek, Someday, Unspecified)
 
         fun fromRank(rank: Int): Priority = entries.first { it.rank == rank }
     }

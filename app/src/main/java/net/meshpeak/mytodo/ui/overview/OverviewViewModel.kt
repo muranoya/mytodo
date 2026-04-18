@@ -35,7 +35,6 @@ data class OverviewSection(
 
 data class OverviewUiState(
     val sections: List<OverviewSection> = emptyList(),
-    val folders: List<Folder> = emptyList(),
     val isLoading: Boolean = true,
 )
 
@@ -65,7 +64,7 @@ class OverviewViewModel @Inject constructor(
                 .groupBy { it.todo.priority }
                 .toSortedMap(compareBy { it.rank })
                 .map { (priority, rs) -> OverviewSection(priority, rs) }
-            OverviewUiState(sections = sections, folders = folders, isLoading = false)
+            OverviewUiState(sections = sections, isLoading = false)
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),

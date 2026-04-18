@@ -5,8 +5,19 @@ avd := "Medium_Phone_API_36.1"
 default:
     @just --list
 
-check:
+version:
+    @cat VERSION
+
+lint:
     ./gradlew :app:lintDebug
+
+test:
+    ./gradlew :app:testDebugUnitTest
+
+check: lint test
+
+build-release:
+    ./gradlew :app:assembleRelease
 
 emulator:
     #!/usr/bin/env bash
@@ -28,5 +39,5 @@ run: emulator
     ./gradlew :app:installDebug
     adb shell am start -n {{main_activity}}
 
-release:
-    ./gradlew :app:assembleRelease
+connected-test: emulator
+    ./gradlew :app:connectedDebugAndroidTest

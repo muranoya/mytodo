@@ -75,6 +75,23 @@ class FolderListViewModel @Inject constructor(
         }
     }
 
+    fun rename(folderId: Long, newName: String) {
+        val trimmed = newName.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch {
+            val current = folderRepo.findById(folderId) ?: return@launch
+            folderRepo.upsert(current.copy(name = trimmed))
+            _events.emit(UiEvent.ShowSnackbar(messageRes = R.string.snackbar_folder_renamed, messageArg = trimmed))
+        }
+    }
+
+    fun delete(folderId: Long) {
+        viewModelScope.launch {
+            folderRepo.deleteById(folderId)
+            _events.emit(UiEvent.ShowSnackbar(messageRes = R.string.snackbar_folder_deleted))
+        }
+    }
+
     fun onDragStarted() {
         val snapshot = dbRowsFlow.value ?: return
         preDragSnapshot = snapshot

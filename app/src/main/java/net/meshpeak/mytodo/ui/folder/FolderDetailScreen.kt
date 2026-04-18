@@ -8,12 +8,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
-import androidx.compose.material.icons.filled.DriveFileRenameOutline
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -44,7 +39,6 @@ import net.meshpeak.mytodo.domain.model.Priority
 import net.meshpeak.mytodo.domain.model.Todo
 import net.meshpeak.mytodo.ui.common.SnackbarEffect
 import net.meshpeak.mytodo.ui.components.EmptyState
-import net.meshpeak.mytodo.ui.components.FolderNameSheet
 import net.meshpeak.mytodo.ui.components.SwipeToCompleteDelete
 import net.meshpeak.mytodo.ui.components.TodoEditorInitial
 import net.meshpeak.mytodo.ui.components.TodoEditorSheet
@@ -63,8 +57,6 @@ fun FolderDetailScreen(
     val snackbar = remember { SnackbarHostState() }
     var editing by remember { mutableStateOf<Todo?>(null) }
     var showNewSheet by remember { mutableStateOf(false) }
-    var showRenameSheet by remember { mutableStateOf(false) }
-    var menuExpanded by remember { mutableStateOf(false) }
 
     SnackbarEffect(viewModel.events, snackbar)
 
@@ -81,29 +73,6 @@ fun FolderDetailScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.action_back),
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.action_more))
-                    }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_rename_folder)) },
-                            leadingIcon = { Icon(Icons.Filled.DriveFileRenameOutline, null) },
-                            onClick = {
-                                menuExpanded = false
-                                showRenameSheet = true
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_delete_folder)) },
-                            leadingIcon = { Icon(Icons.Filled.Delete, null) },
-                            onClick = {
-                                menuExpanded = false
-                                viewModel.delete(onBack)
-                            },
                         )
                     }
                 },
@@ -130,33 +99,32 @@ fun FolderDetailScreen(
         }
     }
 
-    if (showNewSheet && state.folder != null) {
-        TodoEditorSheet(
-            folders = state.allFolders,
-            onDismiss = { showNewSheet = false },
-            onSubmit = { result ->
-                viewModel.saveEditor(
-                    initialTodo = null,
-                    folderId = result.folderId,
-                    title = result.title,
-                    note = result.note,
-                    priority = result.priority,
-                )
-                showNewSheet = false
-            },
-            defaultFolderId = state.folder?.id,
-            folderLocked = true,
-        )
+    if (showNewSheet) {
+        val folderId = state.folder?.id
+        if (folderId != null) {
+            TodoEditorSheet(
+                onDismiss = { showNewSheet = false },
+                onSubmit = { result ->
+                    viewModel.saveEditor(
+                        initialTodo = null,
+                        folderId = folderId,
+                        title = result.title,
+                        note = result.note,
+                        priority = result.priority,
+                    )
+                    showNewSheet = false
+                },
+            )
+        }
     }
 
     editing?.let { target ->
         TodoEditorSheet(
-            folders = state.allFolders,
             onDismiss = { editing = null },
             onSubmit = { result ->
                 viewModel.saveEditor(
                     initialTodo = target,
-                    folderId = result.folderId,
+                    folderId = target.folderId,
                     title = result.title,
                     note = result.note,
                     priority = result.priority,
@@ -168,20 +136,7 @@ fun FolderDetailScreen(
                 title = target.title,
                 note = target.note,
                 priority = target.priority,
-                folderId = target.folderId,
             ),
-        )
-    }
-
-    if (showRenameSheet) {
-        FolderNameSheet(
-            titleRes = R.string.sheet_title_rename_folder,
-            initialName = state.folder?.name.orEmpty(),
-            onDismiss = { showRenameSheet = false },
-            onSubmit = { name ->
-                viewModel.rename(name)
-                showRenameSheet = false
-            },
         )
     }
 }
@@ -232,7 +187,7 @@ internal fun FolderDetailContent(
                         ) {
                             TodoRow(
                                 todo = todo,
-                                folderName = null,
+                                subtitle = null,
                                 onClick = { onEdit(todo) },
                                 trailing = {
                                     Icon(
@@ -271,4 +226,3 @@ private fun FolderDetailContentPreview() {
         )
     }
 }
-

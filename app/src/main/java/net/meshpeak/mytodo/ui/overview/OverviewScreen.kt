@@ -7,12 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -22,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.launch
 import net.meshpeak.mytodo.R
 import net.meshpeak.mytodo.domain.model.Todo
 import net.meshpeak.mytodo.ui.common.SnackbarEffect
@@ -44,37 +37,17 @@ import net.meshpeak.mytodo.ui.components.TodoRow
 import net.meshpeak.mytodo.ui.theme.MytodoTheme
 import net.meshpeak.mytodo.ui.theme.tint
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
     viewModel: OverviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     var editing by remember { mutableStateOf<Todo?>(null) }
-    var showNewSheet by remember { mutableStateOf(false) }
-    val needFolderMessage = stringResource(R.string.snackbar_need_folder_first)
 
     SnackbarEffect(viewModel.events, snackbar)
 
     Scaffold(
-        topBar = {
-            LargeTopAppBar(title = { Text(stringResource(R.string.nav_overview)) })
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    if (state.folders.isEmpty()) {
-                        scope.launch { snackbar.showSnackbar(needFolderMessage) }
-                    } else {
-                        showNewSheet = true
-                    }
-                },
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_new_todo))
-            }
-        },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { inner ->
         Box(Modifier.fillMaxSize().padding(inner)) {
@@ -85,7 +58,14 @@ fun OverviewScreen(
                     support = stringResource(R.string.empty_overview_support),
                 )
                 else -> LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    state.sections.forEach { section ->
+                    state.sections.forEachIndexed { index, section ->
+                        if (index > 0) {
+                            item(key = "d-${section.priority.rank}") {
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
+                        }
                         item(key = "h-${section.priority.rank}") {
                             PrioritySectionHeader(section.priority.label(), section.priority.tint())
                         }
@@ -96,7 +76,7 @@ fun OverviewScreen(
                             ) {
                                 TodoRow(
                                     todo = row.todo,
-                                    folderName = row.folderName,
+                                    subtitle = row.folderName.takeIf { it.isNotBlank() },
                                     onClick = { editing = row.todo },
                                 )
                             }
@@ -107,32 +87,13 @@ fun OverviewScreen(
         }
     }
 
-    if (showNewSheet) {
-        TodoEditorSheet(
-            folders = state.folders,
-            onDismiss = { showNewSheet = false },
-            onSubmit = { result ->
-                viewModel.saveEditor(
-                    initialTodo = null,
-                    folderId = result.folderId,
-                    title = result.title,
-                    note = result.note,
-                    priority = result.priority,
-                )
-                showNewSheet = false
-            },
-            defaultFolderId = state.folders.firstOrNull()?.id,
-        )
-    }
-
     editing?.let { target ->
         TodoEditorSheet(
-            folders = state.folders,
             onDismiss = { editing = null },
             onSubmit = { result ->
                 viewModel.saveEditor(
                     initialTodo = target,
-                    folderId = result.folderId,
+                    folderId = target.folderId,
                     title = result.title,
                     note = result.note,
                     priority = result.priority,
@@ -144,7 +105,6 @@ fun OverviewScreen(
                 title = target.title,
                 note = target.note,
                 priority = target.priority,
-                folderId = target.folderId,
             ),
         )
     }

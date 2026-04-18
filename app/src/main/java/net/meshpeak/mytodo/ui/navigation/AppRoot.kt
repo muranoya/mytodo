@@ -20,7 +20,7 @@ fun AppRoot() {
     ) { innerPadding ->
         NavHost(
             navController = controller,
-            startDestination = TopRoute.Overview,
+            startDestination = TopRoute.FolderList,
             modifier = Modifier.padding(innerPadding),
         ) {
             composable<TopRoute.Overview> { OverviewScreen() }
