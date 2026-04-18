@@ -50,6 +50,10 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets.getByName("androidTest") {
+        assets.srcDirs("$projectDir/schemas")
+    }
 }
 
 kotlin {
@@ -94,10 +98,14 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.google.android.material)
 
+    implementation(libs.sh.calvin.reorderable)
+
     testImplementation(libs.junit)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 }

@@ -7,7 +7,10 @@ sealed interface TopRoute {
     data object Overview : TopRoute
 
     @Serializable
-    data object Folders : TopRoute
+    data object FolderList : TopRoute
+
+    @Serializable
+    data class FolderDetail(val folderId: Long) : TopRoute
 
     @Serializable
     data object Trash : TopRoute

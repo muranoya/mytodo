@@ -27,7 +27,7 @@ private data class TopTab(
 
 private val tabs: List<TopTab> = listOf(
     TopTab(TopRoute.Overview, R.string.nav_overview, Icons.Filled.Inbox),
-    TopTab(TopRoute.Folders, R.string.nav_folders, Icons.Filled.Folder),
+    TopTab(TopRoute.FolderList, R.string.nav_folders, Icons.Filled.Folder),
     TopTab(TopRoute.Trash, R.string.nav_trash, Icons.Filled.DeleteSweep),
 )
 
@@ -38,7 +38,7 @@ fun MytodoBottomBar(controller: NavHostController) {
 
     NavigationBar {
         tabs.forEach { tab ->
-            val selected = currentDestination?.matches(tab.route) == true
+            val selected = currentDestination?.isIn(tab.route) == true
             NavigationBarItem(
                 selected = selected,
                 onClick = {
@@ -57,8 +57,12 @@ fun MytodoBottomBar(controller: NavHostController) {
     }
 }
 
-private fun NavDestination.matches(route: TopRoute): Boolean = when (route) {
+/**
+ * `FolderList` タブは `FolderDetail` 画面もその傘下として扱う（バックスタック内で「フォルダ」タブがハイライト）。
+ */
+private fun NavDestination.isIn(route: TopRoute): Boolean = when (route) {
     is TopRoute.Overview -> hasRoute<TopRoute.Overview>()
-    is TopRoute.Folders -> hasRoute<TopRoute.Folders>()
+    is TopRoute.FolderList -> hasRoute<TopRoute.FolderList>() || hasRoute<TopRoute.FolderDetail>()
+    is TopRoute.FolderDetail -> hasRoute<TopRoute.FolderDetail>()
     is TopRoute.Trash -> hasRoute<TopRoute.Trash>()
 }
