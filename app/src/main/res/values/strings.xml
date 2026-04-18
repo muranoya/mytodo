@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">mytodo</string>
+
+    <string name="nav_overview">アクティブ</string>
+    <string name="nav_folders">フォルダ</string>
+    <string name="nav_trash">ゴミ箱</string>
+
+    <string name="priority_asap">すぐやる</string>
+    <string name="priority_today">今日やる</string>
+    <string name="priority_tomorrow">明日やる</string>
+    <string name="priority_this_week">今週中</string>
+    <string name="priority_someday">そのうち</string>
+
+    <string name="placeholder_overview">アクティブ一覧（Coming soon）</string>
+    <string name="placeholder_folders">フォルダ一覧（Coming soon）</string>
+    <string name="placeholder_trash">ゴミ箱（Coming soon）</string>
+</resources>
