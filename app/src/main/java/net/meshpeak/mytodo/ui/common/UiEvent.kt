@@ -7,6 +7,6 @@ sealed interface UiEvent {
         @StringRes val messageRes: Int,
         val messageArg: String? = null,
         @StringRes val actionLabelRes: Int? = null,
-        val onAction: (suspend () -> Unit)? = null,
+        val onAction: (() -> Unit)? = null,
     ) : UiEvent
 }

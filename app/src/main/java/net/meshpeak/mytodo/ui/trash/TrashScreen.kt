@@ -14,8 +14,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -32,9 +34,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.meshpeak.mytodo.R
+import net.meshpeak.mytodo.ui.common.AppSnackbarHost
 import net.meshpeak.mytodo.ui.common.SnackbarEffect
 import net.meshpeak.mytodo.ui.components.EmptyState
-import net.meshpeak.mytodo.ui.components.SwipeToCompleteDelete
 import net.meshpeak.mytodo.ui.components.TodoRow
 import net.meshpeak.mytodo.ui.theme.MytodoTheme
 
@@ -48,7 +50,7 @@ fun TrashScreen(
     SnackbarEffect(viewModel.events, snackbar)
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { AppSnackbarHost(snackbar) },
     ) { inner ->
         Box(Modifier.fillMaxSize().padding(inner)) {
             when {
@@ -83,18 +85,26 @@ fun TrashScreen(
                             } else {
                                 status
                             }
-                            SwipeToCompleteDelete(
-                                onComplete = { viewModel.restore(row.todo.id) },
-                                onDelete = { viewModel.purgeNow(row.todo.id) },
-                                completeIcon = Icons.Filled.Restore,
-                                deleteIcon = Icons.Filled.DeleteForever,
-                            ) {
-                                TodoRow(
-                                    todo = row.todo,
-                                    subtitle = subtitle,
-                                    onClick = {},
-                                )
-                            }
+                            TodoRow(
+                                todo = row.todo,
+                                subtitle = subtitle,
+                                onClick = {},
+                                trailing = {
+                                    IconButton(onClick = { viewModel.restore(row.todo.id) }) {
+                                        Icon(
+                                            Icons.Filled.Restore,
+                                            contentDescription = stringResource(R.string.cd_restore),
+                                        )
+                                    }
+                                    IconButton(onClick = { viewModel.purgeNow(row.todo.id) }) {
+                                        Icon(
+                                            Icons.Filled.DeleteForever,
+                                            contentDescription = stringResource(R.string.cd_purge_forever),
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
+                                },
+                            )
                         }
                     }
                 }

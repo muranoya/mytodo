@@ -79,7 +79,7 @@ class OverviewViewModel @Inject constructor(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_completed,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { completeTodo(id, completed = before.isCompleted) },
+                    onAction = { viewModelScope.launch { completeTodo(id, completed = before.isCompleted) } },
                 ),
             )
         }
@@ -93,7 +93,7 @@ class OverviewViewModel @Inject constructor(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_moved_to_trash,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { todoRepo.setDeletedAt(id, before.deletedAt) },
+                    onAction = { viewModelScope.launch { todoRepo.setDeletedAt(id, before.deletedAt) } },
                 ),
             )
         }

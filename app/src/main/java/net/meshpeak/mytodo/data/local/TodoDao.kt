@@ -22,7 +22,7 @@ interface TodoDao {
         """
         SELECT * FROM todo
         WHERE folder_id = :folderId AND is_completed = 0 AND deleted_at IS NULL
-        ORDER BY priority_rank ASC, order_index ASC, id ASC
+        ORDER BY order_index ASC, id ASC
         """,
     )
     fun observeByFolder(folderId: Long): Flow<List<TodoEntity>>

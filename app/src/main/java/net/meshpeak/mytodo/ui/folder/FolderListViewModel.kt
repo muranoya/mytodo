@@ -124,7 +124,7 @@ class FolderListViewModel @Inject constructor(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_reorder_applied,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { folderRepo.reorder(prevUpdates) },
+                    onAction = { viewModelScope.launch { folderRepo.reorder(prevUpdates) } },
                 ),
             )
         }

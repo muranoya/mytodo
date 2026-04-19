@@ -24,6 +24,11 @@
     <string name="action_cancel">キャンセル</string>
     <string name="action_save">保存</string>
     <string name="action_confirm_delete">削除する</string>
+    <string name="action_about">アプリ情報</string>
+    <string name="action_close">閉じる</string>
+
+    <string name="about_dialog_title">アプリ情報</string>
+    <string name="about_version_format">バージョン %1$s</string>
 
     <string name="label_title">タイトル</string>
     <string name="label_note">メモ</string>
@@ -64,4 +69,11 @@
     <string name="snackbar_reorder_applied">並び順を更新しました</string>
 
     <string name="action_drag_handle">並び替えハンドル</string>
+
+    <string name="swipe_label_complete">完了</string>
+    <string name="swipe_label_delete">削除</string>
+    <string name="swipe_label_restore">復元</string>
+    <string name="swipe_label_purge">完全削除</string>
+    <string name="cd_restore">復元</string>
+    <string name="cd_purge_forever">完全に削除</string>
 </resources>

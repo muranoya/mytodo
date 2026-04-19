@@ -1,11 +1,15 @@
 package net.meshpeak.mytodo.ui.components
 
+import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
@@ -13,26 +17,28 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import net.meshpeak.mytodo.R
 
 /**
  * TODO 行を右スワイプで完了、左スワイプで削除するラッパ。
- * 閾値を超えた瞬間に 1 回だけ触覚フィードバックを発火する。
- * 両方向を無効化したい場合は `enableComplete` / `enableDelete` を false に。
+ * ドラッグ開始直後から方向に応じた色とラベルを表示し、閾値到達で背景濃化＋アイコン拡大に切り替える。
  *
- * @param onComplete 右スワイプ完了時のコールバック。呼び出し側がデータ更新で行を除去する想定。
- * @param onDelete 左スワイプ削除時のコールバック。
+ * @param onComplete 右スワイプ確定時のコールバック。呼び出し側がデータ更新で行を除去する想定。
+ * @param onDelete 左スワイプ確定時のコールバック。
  */
 @Composable
 fun SwipeToCompleteDelete(
@@ -41,12 +47,10 @@ fun SwipeToCompleteDelete(
     modifier: Modifier = Modifier,
     enableComplete: Boolean = true,
     enableDelete: Boolean = true,
-    completeIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.Check,
-    completeBackground: Color = MaterialTheme.colorScheme.tertiaryContainer,
-    completeTint: Color = MaterialTheme.colorScheme.onTertiaryContainer,
-    deleteIcon: androidx.compose.ui.graphics.vector.ImageVector = Icons.Filled.Delete,
-    deleteBackground: Color = MaterialTheme.colorScheme.errorContainer,
-    deleteTint: Color = MaterialTheme.colorScheme.onErrorContainer,
+    completeIcon: ImageVector = Icons.Filled.Check,
+    @StringRes completeLabelRes: Int = R.string.swipe_label_complete,
+    deleteIcon: ImageVector = Icons.Filled.Delete,
+    @StringRes deleteLabelRes: Int = R.string.swipe_label_delete,
     content: @Composable () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
@@ -79,35 +83,83 @@ fun SwipeToCompleteDelete(
         }
     }
 
+    val completeBgSoft = MaterialTheme.colorScheme.tertiaryContainer
+    val completeFgSoft = MaterialTheme.colorScheme.onTertiaryContainer
+    val completeBgStrong = MaterialTheme.colorScheme.tertiary
+    val completeFgStrong = MaterialTheme.colorScheme.onTertiary
+    val deleteBgSoft = MaterialTheme.colorScheme.errorContainer
+    val deleteFgSoft = MaterialTheme.colorScheme.onErrorContainer
+    val deleteBgStrong = MaterialTheme.colorScheme.error
+    val deleteFgStrong = MaterialTheme.colorScheme.onError
+
     SwipeToDismissBox(
         state = state,
         modifier = modifier,
         enableDismissFromStartToEnd = enableComplete,
         enableDismissFromEndToStart = enableDelete,
         backgroundContent = {
-            val target = state.targetValue
-            val (bg, align, icon, tint) = remember(target, completeBackground, deleteBackground) {
-                when (target) {
-                    SwipeToDismissBoxValue.StartToEnd -> BackgroundSpec(completeBackground, Alignment.CenterStart, completeIcon, completeTint)
-                    SwipeToDismissBoxValue.EndToStart -> BackgroundSpec(deleteBackground, Alignment.CenterEnd, deleteIcon, deleteTint)
-                    SwipeToDismissBoxValue.Settled -> BackgroundSpec(Color.Transparent, Alignment.CenterStart, completeIcon, completeTint)
-                }
+            val offset = runCatching { state.requireOffset() }.getOrDefault(0f)
+            val isCompleteSide = offset > 0.5f
+            val isDeleteSide = offset < -0.5f
+            val reached = state.targetValue != SwipeToDismissBoxValue.Settled
+
+            val iconSize by animateDpAsState(
+                targetValue = if (reached) 32.dp else 24.dp,
+                label = "swipeIconSize",
+            )
+
+            val bg = when {
+                isCompleteSide -> if (reached) completeBgStrong else completeBgSoft
+                isDeleteSide -> if (reached) deleteBgStrong else deleteBgSoft
+                else -> Color.Transparent
             }
+            val fg = when {
+                isCompleteSide -> if (reached) completeFgStrong else completeFgSoft
+                isDeleteSide -> if (reached) deleteFgStrong else deleteFgSoft
+                else -> Color.Transparent
+            }
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(bg)
                     .padding(horizontal = 24.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .align(align)
-                        .fillMaxSize(),
-                    horizontalArrangement = if (align == Alignment.CenterStart) Arrangement.Start else Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (target != SwipeToDismissBoxValue.Settled) {
-                        Icon(icon, contentDescription = null, tint = tint)
+                if (isCompleteSide) {
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterStart),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            completeIcon,
+                            contentDescription = null,
+                            tint = fg,
+                            modifier = Modifier.size(iconSize),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text = stringResource(completeLabelRes),
+                            color = fg,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                } else if (isDeleteSide) {
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(deleteLabelRes),
+                            color = fg,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Icon(
+                            deleteIcon,
+                            contentDescription = null,
+                            tint = fg,
+                            modifier = Modifier.size(iconSize),
+                        )
                     }
                 }
             }
@@ -115,10 +167,3 @@ fun SwipeToCompleteDelete(
         content = { content() },
     )
 }
-
-private data class BackgroundSpec(
-    val background: Color,
-    val alignment: Alignment,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val tint: Color,
-)

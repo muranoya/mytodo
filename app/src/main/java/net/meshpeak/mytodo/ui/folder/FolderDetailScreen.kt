@@ -15,7 +15,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -37,6 +36,7 @@ import java.time.Instant
 import net.meshpeak.mytodo.R
 import net.meshpeak.mytodo.domain.model.Priority
 import net.meshpeak.mytodo.domain.model.Todo
+import net.meshpeak.mytodo.ui.common.AppSnackbarHost
 import net.meshpeak.mytodo.ui.common.SnackbarEffect
 import net.meshpeak.mytodo.ui.components.EmptyState
 import net.meshpeak.mytodo.ui.components.SwipeToCompleteDelete
@@ -83,7 +83,7 @@ fun FolderDetailScreen(
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.action_new_todo))
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { AppSnackbarHost(snackbar) },
     ) { inner ->
         Box(Modifier.fillMaxSize().padding(inner)) {
             FolderDetailContent(

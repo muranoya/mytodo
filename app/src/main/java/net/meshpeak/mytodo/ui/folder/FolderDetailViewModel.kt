@@ -86,7 +86,7 @@ class FolderDetailViewModel @Inject constructor(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_completed,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { completeTodo(id, completed = before.isCompleted) },
+                    onAction = { viewModelScope.launch { completeTodo(id, completed = before.isCompleted) } },
                 ),
             )
         }
@@ -100,7 +100,7 @@ class FolderDetailViewModel @Inject constructor(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_moved_to_trash,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { todoRepo.setDeletedAt(id, before.deletedAt) },
+                    onAction = { viewModelScope.launch { todoRepo.setDeletedAt(id, before.deletedAt) } },
                 ),
             )
         }
@@ -148,7 +148,7 @@ class FolderDetailViewModel @Inject constructor(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_reorder_applied,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { todoRepo.reorder(prevUpdates) },
+                    onAction = { viewModelScope.launch { todoRepo.reorder(prevUpdates) } },
                 ),
             )
         }

@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import net.meshpeak.mytodo.R
 import net.meshpeak.mytodo.domain.model.Todo
+import net.meshpeak.mytodo.ui.common.AppSnackbarHost
 import net.meshpeak.mytodo.ui.common.SnackbarEffect
 import net.meshpeak.mytodo.ui.common.label
 import net.meshpeak.mytodo.ui.components.EmptyState
@@ -48,7 +48,7 @@ fun OverviewScreen(
     SnackbarEffect(viewModel.events, snackbar)
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbar) },
+        snackbarHost = { AppSnackbarHost(snackbar) },
     ) { inner ->
         Box(Modifier.fillMaxSize().padding(inner)) {
             when {
