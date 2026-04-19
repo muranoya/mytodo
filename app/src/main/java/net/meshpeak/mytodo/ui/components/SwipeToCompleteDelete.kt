@@ -20,7 +20,6 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -57,31 +56,30 @@ fun SwipeToCompleteDelete(
     val latestOnComplete by rememberUpdatedState(onComplete)
     val latestOnDelete by rememberUpdatedState(onDelete)
 
+    // 目標アンカーへの遷移を常に拒否することで state.currentValue を Settled に固定する。
+    // LazyColumn のアイテム再構成時に rememberSaveable が StartToEnd/EndToStart を復元して
+    // 再スワイプ扱いになるのを防ぐため。アクションは遷移確定前に confirmValueChange 内で発火。
     val state = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             when (value) {
-                SwipeToDismissBoxValue.StartToEnd -> enableComplete
-                SwipeToDismissBoxValue.EndToStart -> enableDelete
+                SwipeToDismissBoxValue.StartToEnd -> {
+                    if (enableComplete) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        latestOnComplete()
+                    }
+                    false
+                }
+                SwipeToDismissBoxValue.EndToStart -> {
+                    if (enableDelete) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        latestOnDelete()
+                    }
+                    false
+                }
                 SwipeToDismissBoxValue.Settled -> false
             }
         },
     )
-
-    LaunchedEffect(state.currentValue) {
-        when (state.currentValue) {
-            SwipeToDismissBoxValue.StartToEnd -> {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                latestOnComplete()
-                state.reset()
-            }
-            SwipeToDismissBoxValue.EndToStart -> {
-                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                latestOnDelete()
-                state.reset()
-            }
-            SwipeToDismissBoxValue.Settled -> Unit
-        }
-    }
 
     val completeBgSoft = MaterialTheme.colorScheme.tertiaryContainer
     val completeFgSoft = MaterialTheme.colorScheme.onTertiaryContainer

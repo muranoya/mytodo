@@ -112,7 +112,6 @@ fun FolderDetailScreen(
                         note = result.note,
                         priority = result.priority,
                     )
-                    showNewSheet = false
                 },
             )
         }

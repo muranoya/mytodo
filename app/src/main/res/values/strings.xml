@@ -67,6 +67,8 @@
     <string name="snackbar_purged">完全に削除しました</string>
     <string name="snackbar_trash_emptied">アーカイブを空にしました</string>
     <string name="snackbar_reorder_applied">並び順を更新しました</string>
+    <string name="feedback_todo_added">「%1$s」を追加しました</string>
+    <string name="cd_added_icon">追加済み</string>
 
     <string name="action_drag_handle">並び替えハンドル</string>
 

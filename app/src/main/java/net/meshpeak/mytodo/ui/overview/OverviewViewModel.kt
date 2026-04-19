@@ -19,6 +19,7 @@ import net.meshpeak.mytodo.domain.repository.FolderRepository
 import net.meshpeak.mytodo.domain.repository.TodoRepository
 import net.meshpeak.mytodo.domain.usecase.CompleteTodoUseCase
 import net.meshpeak.mytodo.domain.usecase.CreateTodoUseCase
+import net.meshpeak.mytodo.domain.usecase.RestoreTodoUseCase
 import net.meshpeak.mytodo.domain.usecase.SoftDeleteTodoUseCase
 import net.meshpeak.mytodo.domain.usecase.UpdateTodoUseCase
 import net.meshpeak.mytodo.ui.common.UiEvent
@@ -44,6 +45,7 @@ class OverviewViewModel @Inject constructor(
     private val folderRepo: FolderRepository,
     private val completeTodo: CompleteTodoUseCase,
     private val softDeleteTodo: SoftDeleteTodoUseCase,
+    private val restoreTodo: RestoreTodoUseCase,
     private val createTodo: CreateTodoUseCase,
     private val updateTodo: UpdateTodoUseCase,
 ) : ViewModel() {
@@ -73,13 +75,15 @@ class OverviewViewModel @Inject constructor(
 
     fun complete(id: Long) {
         viewModelScope.launch {
-            val before = todoRepo.findById(id) ?: return@launch
+            if (todoRepo.findById(id) == null) return@launch
             completeTodo(id, completed = true)
             _events.emit(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_completed,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { viewModelScope.launch { completeTodo(id, completed = before.isCompleted) } },
+                    onAction = {
+                        viewModelScope.launch { restoreTodo(id) }
+                    },
                 ),
             )
         }
@@ -87,13 +91,15 @@ class OverviewViewModel @Inject constructor(
 
     fun softDelete(id: Long) {
         viewModelScope.launch {
-            val before = todoRepo.findById(id) ?: return@launch
+            if (todoRepo.findById(id) == null) return@launch
             softDeleteTodo(id)
             _events.emit(
                 UiEvent.ShowSnackbar(
                     messageRes = R.string.snackbar_moved_to_trash,
                     actionLabelRes = R.string.action_undo,
-                    onAction = { viewModelScope.launch { todoRepo.setDeletedAt(id, before.deletedAt) } },
+                    onAction = {
+                        viewModelScope.launch { restoreTodo(id) }
+                    },
                 ),
             )
         }

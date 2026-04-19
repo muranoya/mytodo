@@ -1,5 +1,7 @@
 package net.meshpeak.mytodo.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -39,6 +41,10 @@ fun AppRoot() {
             navController = controller,
             startDestination = TopRoute.FolderList,
             modifier = Modifier.padding(innerPadding),
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None },
         ) {
             composable<TopRoute.Overview> { OverviewScreen() }
             composable<TopRoute.FolderList> {

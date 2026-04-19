@@ -5,8 +5,11 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarVisuals
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalResources
@@ -70,20 +73,39 @@ fun AppSnackbarHost(hostState: SnackbarHostState) {
     SnackbarHost(hostState) { data ->
         val visuals = data.visuals as? UiEventVisuals
         val actionText = visuals?.actionText
-        Snackbar(
-            action = if (actionText != null) {
-                {
-                    TextButton(onClick = {
-                        visuals.onAction?.invoke()
-                        data.dismiss()
-                    }) {
-                        Text(actionText)
-                    }
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { value ->
+                if (value == SwipeToDismissBoxValue.StartToEnd ||
+                    value == SwipeToDismissBoxValue.EndToStart
+                ) {
+                    data.dismiss()
+                    true
+                } else {
+                    false
                 }
-            } else {
-                null
             },
-            content = { Text(data.visuals.message) },
         )
+        SwipeToDismissBox(
+            state = dismissState,
+            backgroundContent = {},
+            enableDismissFromStartToEnd = true,
+            enableDismissFromEndToStart = true,
+        ) {
+            Snackbar(
+                action = if (actionText != null) {
+                    {
+                        TextButton(onClick = {
+                            visuals.onAction?.invoke()
+                            data.dismiss()
+                        }) {
+                            Text(actionText)
+                        }
+                    }
+                } else {
+                    null
+                },
+                content = { Text(data.visuals.message) },
+            )
+        }
     }
 }
